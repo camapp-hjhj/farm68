@@ -1,4 +1,5 @@
-import { getStore } from '@netlify/blobs';
+import { getUser } from '../../../lib/auth';
+import { getJSON, listKeys, readJSON } from '../../../lib/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,25 +10,22 @@ async function step(name: string, fn: () => Promise<any>) {
   const t = Date.now();
   try {
     const v = await withTimeout(fn());
-    return { name, ok: true, ms: Date.now() - t, v: JSON.stringify(v)?.slice(0, 120) };
+    return { name, ok: true, ms: Date.now() - t, v: JSON.stringify(v)?.slice(0, 150) };
   } catch (e: any) {
     return { name, ok: false, ms: Date.now() - t, err: String(e?.message || e).slice(0, 200) };
   }
 }
 
 export async function GET() {
-  const env = {
-    hasBlobsCtx: !!process.env.NETLIFY_BLOBS_CONTEXT,
-    hasSiteId: !!process.env.SITE_ID,
-    netlify: process.env.NETLIFY || null,
-  };
-  const eventual = getStore({ name: 'farm68-debug' });
-  const strong = getStore({ name: 'farm68-debug', consistency: 'strong' });
-  const results = [];
-  results.push(await step('eventual.set', () => eventual.setJSON('ping', { at: Date.now() })));
-  results.push(await step('eventual.get', () => eventual.get('ping', { type: 'json' })));
-  results.push(await step('strong.get', () => strong.get('ping', { type: 'json' })));
-  results.push(await step('strong.getWithMetadata', () => strong.getWithMetadata('ping', { type: 'json' })));
-  results.push(await step('list', () => eventual.list({ prefix: 'p' })));
-  return Response.json({ env, results });
+  const r = [];
+  r.push(await step('getUser', async () => (await getUser())?.email ?? null));
+  r.push(await step('readJSON config', async () => {
+    const x = await readJSON<any>('config');
+    return x ? { etag: x.etag, members: x.data?.members?.map((m: any) => [m.id, m.name, !!m.email]) } : null;
+  }));
+  r.push(await step('getJSON reports', () => getJSON('reports')));
+  r.push(await step('getJSON transactions', () => getJSON('transactions')));
+  r.push(await step('listKeys day:', () => listKeys('day:')));
+  r.push(await step('listKeys session:', () => listKeys('session:')));
+  return Response.json(r);
 }
