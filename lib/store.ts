@@ -26,7 +26,10 @@ export async function readJSON<T = any>(key: string): Promise<{ data: T; etag?: 
       return null;
     }
   }
-  const r = await dataStore().getWithMetadata(key, { type: 'json' });
+  // Đọc key chưa tồn tại bằng GET đôi khi bị treo trên Netlify, nên kiểm tra bằng HEAD (getMetadata) trước.
+  const store = dataStore();
+  if (!(await store.getMetadata(key))) return null;
+  const r = await store.getWithMetadata(key, { type: 'json' });
   return r ? { data: r.data as T, etag: r.etag } : null;
 }
 
@@ -105,7 +108,9 @@ export async function getFile(key: string): Promise<{ body: ArrayBuffer; content
       return null;
     }
   }
-  const r = await fileStore().getWithMetadata(key, { type: 'arrayBuffer' });
+  const store = fileStore();
+  if (!(await store.getMetadata(key))) return null;
+  const r = await store.getWithMetadata(key, { type: 'arrayBuffer' });
   if (!r) return null;
   return { body: r.data, contentType: String(r.metadata?.contentType || 'image/jpeg') };
 }
