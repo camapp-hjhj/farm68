@@ -1,9 +1,8 @@
-import { getUser } from '../../../lib/auth';
-import { getJSON, listKeys, readJSON } from '../../../lib/store';
+import { getStore } from '@netlify/blobs';
 
 export const dynamic = 'force-dynamic';
 
-const withTimeout = <T,>(p: Promise<T>, ms = 5000) =>
+const withTimeout = <T,>(p: Promise<T>, ms = 4000) =>
   Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout ' + ms + 'ms')), ms))]);
 
 async function step(name: string, fn: () => Promise<any>) {
@@ -17,15 +16,16 @@ async function step(name: string, fn: () => Promise<any>) {
 }
 
 export async function GET() {
+  const strong = getStore({ name: 'farm68-data', consistency: 'strong' });
+  const eventual = getStore({ name: 'farm68-data' });
   const r = [];
-  r.push(await step('getUser', async () => (await getUser())?.email ?? null));
-  r.push(await step('readJSON config', async () => {
-    const x = await readJSON<any>('config');
-    return x ? { etag: x.etag, members: x.data?.members?.map((m: any) => [m.id, m.name, !!m.email]) } : null;
-  }));
-  r.push(await step('getJSON reports', () => getJSON('reports')));
-  r.push(await step('getJSON transactions', () => getJSON('transactions')));
-  r.push(await step('listKeys day:', () => listKeys('day:')));
-  r.push(await step('listKeys session:', () => listKeys('session:')));
+  r.push(await step('list all', () => eventual.list()));
+  r.push(await step('strong.get missing json', () => strong.get('nope-x', { type: 'json' })));
+  r.push(await step('strong.get missing text', () => strong.get('nope-x')));
+  r.push(await step('strong.getMetadata missing', () => strong.getMetadata('nope-x')));
+  r.push(await step('eventual.getWithMetadata missing', () => eventual.getWithMetadata('nope-x', { type: 'json' })));
+  r.push(await step('strong.getWithMetadata missing text', () => strong.getWithMetadata('nope-x')));
+  r.push(await step('strong.get config json', () => strong.get('config', { type: 'json' })));
+  r.push(await step('strong.getMetadata config', () => strong.getMetadata('config')));
   return Response.json(r);
 }
