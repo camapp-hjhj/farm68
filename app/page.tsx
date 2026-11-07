@@ -1,2 +1,2 @@
-import Farm from './farm';
-export default function Page(){return <Farm/>;}
+import Gate from './gate';
+export default function Page(){return <Gate/>;}

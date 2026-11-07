@@ -8,7 +8,7 @@ Bản chuyển từ ChatGPT Sites sang Netlify. Giao diện, nông trại 3D và
 | Dữ liệu | Cloudflare D1 | Netlify Blobs (có sẵn, không cần cài) |
 | Ảnh tập, avatar | Cloudflare R2 | Netlify Blobs |
 
-Chỉ những email nằm trong `OWNER_EMAILS` hoặc đã được gắn với một cư dân trong **Nhà điều hành** mới vào xem được.
+Mỗi người tự đăng nhập Google rồi chọn tên mình trong danh sách cư dân (mỗi tên chỉ nhận một lần). Quản trị có thể xóa email bị nhận nhầm trong **Nhà điều hành**. Người chưa nhận tên không xem được dữ liệu của nhóm.
 
 ## Cài đặt lần đầu
 
@@ -22,7 +22,7 @@ Chỉ những email nằm trong `OWNER_EMAILS` hoặc đã được gắn với 
    - `AUTH_SECRET`: chuỗi ngẫu nhiên từ 32 ký tự trở lên.
    - `OWNER_EMAILS`: email Google của quản trị gốc.
 4. **Deploy lại** (Deploys → Trigger deploy) để nhận biến môi trường.
-5. **Gắn email cho cư dân:** quản trị đăng nhập, vào **Nhà điều hành** và gắn email Google cho từng người.
+5. **Gửi link cho nhóm:** mỗi người đăng nhập Google và tự chọn tên mình.
 
 ## Chạy thử trên máy
 
